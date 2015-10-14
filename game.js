@@ -1,32 +1,35 @@
 $(document).ready(function() {
-	var canvas;
-	var context;
+	/*Define canvas variables*/
+	var gameCanvas;
+	var gameCtx;
 	var cWidth;
 	var cHeight;
 
+	/*Define a m x m grid - the snake cannot go out of these boundaries*/
 	var gridSize;
-	var gridOrigin;
+	var gridOrigin;  //upper left corner of the grid
+	var cellSize;  //size of each cell 
 
+	/*Define in-game variables*/
 	var snake; //array of snake tiles
-	var food;
+	var food; //food coordinates
 	var dir; //direction of the snake
-	var cellSize;
-	var interval = 0;
+
+	var interval; //this controls game speed
 	var requestId;
 	var gameOver;
 
 	var growthPerFood = 3;
-	var numHeadsToAdd = 0;
+	var numHeadsToAdd;
 
-	var rotAngle = 0;
+	var numFoodEaten;
 
-	var numFoodEaten = 0;
-
+	/*Define variables for the warning sign*/
 	var warningImg;
 	var warningImgOpacity;
-	var timeUntilWarning;
-	var showWarning;
-	var numWarningsToShow;
+	var timeUntilWarning;  //after the snake eats a certain number of food items, this variable starts counting down
+	var warningIsActive;
+	var numWarningsToShow; //how many times the warning should show
 
 	init();
 
@@ -35,42 +38,52 @@ $(document).ready(function() {
 	}
 
 	function init() {
-		canvas = $("#gameboard")[0];
-		context = canvas.getContext("2d");
-		cWidth = canvas.width;
-		cHeight = canvas.height;
+		/*Create canvas and context*/
+		gameCanvas = $("#gameboard")[0];
+		gameCtx = gameCanvas.getContext("2d");
+		cWidth = gameCanvas.width;
+		cHeight = gameCanvas.height;
 
+		/*Create the warning image once so we don't have to reload it every time*/
 		warningImg = new Image();
 		warningImg.src = "img/warning.png";
 
-		//set up the cage which the snake is in
+		//set up the grid and cell variables
 		cellSize = 8;
 		gridSize = Math.floor( (cWidth / Math.sqrt(2)) / cellSize) * cellSize;
 		gridOrigin = (cWidth - gridSize) / 2;
 
-		//set up other stuff
-		
+		scoreboardInit(gridSize, gridOrigin);
 
 		restart();
 	}
 
 	function restart() {
-		numFoodEaten = 0;
-
+		/*Reset events*/
 		Events.reset();
-		
-		context.clearRect(0, 0, cWidth, cHeight);
 
-		makeSnake();
-		console.log("Game initiated");
-		dir = "right";
-		makeFood();
+		/*Clear the canvas*/
+		gameCtx.clearRect(0, 0, cWidth, cHeight);
+
+		/*Instantiate game variables*/
 		gameOver = false;
+		interval = 0;
 
+		/*Instantiate snake variables*/
+		growthPerFood = 3;
+		numFoodEaten = 0;
+		numHeadsToAdd = 0;
+
+		/*Instantiate warning sign variables*/
 		warningImgOpacity = 1;
 		timeUntilWarning = 0;
-		showWarning = false;
+		warningIsActive = false;
 		numWarningsToShow = 3;
+
+		/*Create the snake and food*/
+		makeSnake();
+		dir = "right";
+		makeFood();
 
 		tick();
 	}
@@ -94,7 +107,6 @@ $(document).ready(function() {
 	function tick() {
 		requestId =  requestAnimationFrame(tick);
 		if(interval++ >= 2) {
-			context.rotate(degToRad(rotAngle));
 			update();
 			updateEvents();
 			draw();
@@ -125,17 +137,17 @@ $(document).ready(function() {
 		}
 
 		//check if snake ate food
-		if(food.x === headX && food.y === headY) { //snake at food
+		if(food.x === headX && food.y === headY) { //snake ate food
 			numHeadsToAdd += growthPerFood;
 			makeFood();
 			numFoodEaten++;
 		}
 
-		if(numHeadsToAdd > 0) {
+		if(numHeadsToAdd > 0) { //snake ate food and it's stil growing
 			snake.unshift({x: headX, y:headY});
 			numHeadsToAdd--;
 		}
-		else {
+		else { //snake did not eat food
 			var tail = snake.pop(); //pop the tail, move it to the front if the snake didn't eat anything
 			tail.x = headX;
 			tail.y = headY;
@@ -145,7 +157,7 @@ $(document).ready(function() {
 	}
 
 	function updateEvents() {
-		var foodReq = 3;
+		var foodReq = 0;
 		if(numFoodEaten < foodReq) return;
 
 		if(timeUntilWarning === 0) {
@@ -153,17 +165,19 @@ $(document).ready(function() {
 		}
 
 		if(timeUntilWarning <= 0 && numWarningsToShow > 0) {
-			showWarning = true;
+			warningIsActive = true;
 		}
 
-		if(timeUntilWarning <= 0 && !showWarning && !Events.eventProgramStarted()) {
+		if(timeUntilWarning <= 0 && !warningIsActive && !Events.eventProgramStarted()) {
 			Events.startEventProgram();
 			Events.setTimeUntilEvent(0);
 		}
 
 		if(Events.hasActiveEvent()) {
-			console.log("Time set");
+			//console.log("Time set");
 			Events.setTimeUntilEvent(Math.random() * 200);
+			gameCtx.fillStyle = "rgba(204, 204, 204, 1)";
+		gameCtx.fillRect(gridOrigin, gridOrigin, gridSize, gridSize);
 		}
 		Events.update();
 
@@ -171,10 +185,17 @@ $(document).ready(function() {
 	}
 
 	function draw() {
-		context.fillStyle = "white";
-		context.clearRect(0, 0, $("canvas").width(), $("canvas").height());
-		context.strokeStyle = "black";
-		context.strokeRect(gridOrigin, gridOrigin, gridSize, gridSize);
+		gameCtx.fillStyle = "rgba(255, 255, 255, 0.5)";
+		gameCtx.fillRect(0, 0, cWidth, gridOrigin);
+		gameCtx.fillRect(0, 0, gridOrigin, cHeight);
+		gameCtx.fillRect(0, gridOrigin+gridSize, cWidth, gridOrigin);
+		gameCtx.fillRect(gridOrigin+gridSize, 0, gridOrigin, cHeight);
+
+		//gameCtx.strokeStyle = "black";
+		//gameCtx.strokeRect(gridOrigin, gridOrigin, gridSize, gridSize);
+
+		gameCtx.fillStyle = "rgba(204, 204, 204, 0.5)";
+		gameCtx.fillRect(gridOrigin, gridOrigin, gridSize, gridSize);
 
 		//paint the snake
 		for(var i = 0; i < snake.length; i++)
@@ -182,21 +203,25 @@ $(document).ready(function() {
 		//paint the food
 		drawCell(food.x, food.y, "red");
 
-		if(showWarning)
+		if(warningIsActive)
 			drawWarning();
+
+		gameCtx.globaCompositeOperation = "lighter";
+
+		drawScoreboard();
 	}
 
 	function drawCell(x, y, color) {
-		context.fillStyle = color;
-		context.fillRect(x*cellSize+gridOrigin, y*cellSize+gridOrigin, cellSize, cellSize);
+		gameCtx.fillStyle = color;
+		gameCtx.fillRect(x*cellSize+gridOrigin, y*cellSize+gridOrigin, cellSize, cellSize);
 	}
 
 	function drawWarning() {
-		context.globalAlpha = warningImgOpacity;
+		gameCtx.globalAlpha = warningImgOpacity;
 		var imgWidth = 400;
 		var imgHeight = 100;
-		context.drawImage(warningImg, (cWidth-imgWidth)/2, cHeight/2 - imgHeight/2, imgWidth, imgHeight);
-		context.globalAlpha = 1;
+		gameCtx.drawImage(warningImg, (cWidth-imgWidth)/2, cHeight/2 - imgHeight/2, imgWidth, imgHeight);
+		gameCtx.globalAlpha = 1;
 
 		warningImgOpacity -= 0.05;
 		if(warningImgOpacity < 0) {
@@ -204,7 +229,7 @@ $(document).ready(function() {
 			numWarningsToShow--;
 		}
 
-		if(numWarningsToShow <= 0) showWarning = false;
+		if(numWarningsToShow <= 0) warningIsActive = false;
 	}
 
 	function checkCollision(x, y) {

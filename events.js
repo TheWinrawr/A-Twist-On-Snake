@@ -1,7 +1,7 @@
-var canvas = $("#gameboard")[0];
-var context = canvas.getContext("2d");
-var width = canvas.width;
-var height = canvas.height;
+var gameCanvas = $("#gameboard")[0];
+var gameCtx = gameCanvas.getContext("2d");
+var width = gameCanvas.width;
+var height = gameCanvas.height;
 
 var stackSize = 0; //size of canvas stack, this is reduced to zero every time the game restarts
 
@@ -72,10 +72,10 @@ var Events = {
 
 		//Deplete the stack and restore the canvas to its default state
 		while(stackSize-- > 0) {
-			context.restore();
+			gameCtx.restore();
 		}
 
-		context.resetTransform();
+		gameCtx.resetTransform();
 		saveCanvas();
 
 		this._eventProgram = false;
@@ -120,14 +120,14 @@ Events.transforms = [
 			this._currTotalAngle += this._angle;
 
 			//rotate the canvas around its center
-			context.translate(width/2, height/2);
+			gameCtx.translate(width/2, height/2);
 
 			if(this._currDir === "clockwise")
-				context.rotate(degToRad(this._angle));
+				gameCtx.rotate(degToRad(this._angle));
 			else if(this._currDir === "counterclockwise")
-				context.rotate(-degToRad(this._angle));
+				gameCtx.rotate(-degToRad(this._angle));
 
-			context.translate(-width/2, -height/2);
+			gameCtx.translate(-width/2, -height/2);
 
 			//reached max angle
 			if(!this._active) {
@@ -190,18 +190,18 @@ Events.transforms = [
 			}
 
 			//clear and flip the canvas
-			context.clearRect(0, 0, width, height);
+			//gameCtx.clearRect(0, 0, width, height);
 
 			if(this._currDir === "horizontal") {
-				context.translate(width/2, 0);
-				context.scale(Math.cos(degToRad(this._flipAmount)), 1);
-				context.translate(-width/2, 0);
+				gameCtx.translate(width/2, 0);
+				gameCtx.scale(Math.cos(degToRad(this._flipAmount)), 1);
+				gameCtx.translate(-width/2, 0);
 			}
 
 			else if(this._currDir === "vertical") {
-				context.translate(0, height/2);
-				context.scale(1, Math.cos(degToRad(this._flipAmount)));
-				context.translate(0, -height/2);
+				gameCtx.translate(0, height/2);
+				gameCtx.scale(1, Math.cos(degToRad(this._flipAmount)));
+				gameCtx.translate(0, -height/2);
 			}
 
 			if(!this._active)
@@ -242,10 +242,10 @@ function degToRad(degree) {
 
 function saveCanvas() {
 	stackSize++;
-	context.save();
+	gameCtx.save();
 }
 
 function restoreCanvas() {
 	stackSize--;
-	context.restore();
+	gameCtx.restore();
 }
