@@ -18,6 +18,7 @@ function scoreboardInit(gameGridSize, gameGridOrigin) {
 }
 
 function drawScoreboard() {
+	/*
 	console.log($("#gameboard").css("left"));
 	var leftOffset = (parseInt($("#gameboard").css("margin-left"))) + scOrigin + gridSize;
 	console.log(leftOffset);
@@ -26,4 +27,5 @@ function drawScoreboard() {
 
 	scoreCtx.fillStyle = "rgb(128, 128, 128)";
 	scoreCtx.fillRect(0, 0, scWidth, scHeight);
+	*/
 }
